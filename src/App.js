@@ -234,6 +234,7 @@ function App() {
       )}
       <br />
       <button onClick={handleFbSignIn}>Sign in using Facebook</button>
+      <br />
       <button onClick={handleGitHubSignIn}>Sign In using GitHub</button>
       {googleUser.isSignedIn && (
         <div>

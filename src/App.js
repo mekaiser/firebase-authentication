@@ -12,7 +12,15 @@ if (!firebase.apps.length) {
 
 function App() {
   const [newUser, setNewUser] = useState(false);
-  const [user, setUser] = useState({
+  const [googleUser, setGoogleUser] = useState({
+    isSignedIn: false,
+    name: "",
+    email: "",
+    photo: "",
+    error: "",
+    success: false,
+  });
+  const [fbUser, setFbUser] = useState({
     isSignedIn: false,
     name: "",
     email: "",
@@ -38,7 +46,7 @@ function App() {
           success: false,
           // notfix
         };
-        setUser(signedInUser);
+        setGoogleUser(signedInUser);
         console.log(displayName, email, photoURL);
       })
       .catch((err) => {
@@ -54,15 +62,20 @@ function App() {
       .then((result) => {
         /** @type {firebase.auth.OAuthCredential} */
         var credential = result.credential;
-
-        // The signed-in user info.
         var user = result.user;
-
-        // This gives you a Facebook Access Token. You can use it to access the Facebook API.
         var accessToken = credential.accessToken;
-
-        // ...
         console.log("FB User After Sign In", user);
+        
+        const { displayName, photoURL, email } = user;
+        const signedInUser = {
+          isSignedIn: true,
+          name: displayName,
+          email: email,
+          photo: photoURL,
+          error: "",
+          success: false,
+        };
+        setFbUser(signedInUser);
       })
       .catch((error) => {
         // Handle Errors here.
@@ -91,7 +104,7 @@ function App() {
           error: "",
           success: false,
         };
-        setUser(signedOutUser);
+        setGoogleUser(signedOutUser);
       })
       .catch((err) => {});
   };
@@ -108,48 +121,48 @@ function App() {
       isFieldValid = isPasswordValid && passwordHasNumber;
     }
     if (isFieldValid) {
-      const newUserInfo = { ...user };
+      const newUserInfo = { ...googleUser };
       newUserInfo[e.target.name] = e.target.value;
-      setUser(newUserInfo);
+      setGoogleUser(newUserInfo);
     }
   };
 
   const handleSubmit = (e) => {
-    if (newUser && user.email && user.password) {
+    if (newUser && googleUser.email && googleUser.password) {
       firebase
         .auth()
-        .createUserWithEmailAndPassword(user.email, user.password)
+        .createUserWithEmailAndPassword(googleUser.email, googleUser.password)
         .then((userCredential) => {
-          const newUserInfo = { ...user };
+          const newUserInfo = { ...googleUser };
           newUserInfo.error = "";
           newUserInfo.success = true;
-          setUser(newUserInfo);
-          updateUserName(user.name);
+          setGoogleUser(newUserInfo);
+          updateUserName(googleUser.name);
         })
         .catch((error) => {
-          const newUserInfo = { ...user };
+          const newUserInfo = { ...googleUser };
           newUserInfo.error = error.message;
           newUserInfo.success = false;
-          setUser(newUserInfo);
+          setGoogleUser(newUserInfo);
         });
     }
 
-    if (!newUser && user.email && user.password) {
+    if (!newUser && googleUser.email && googleUser.password) {
       firebase
         .auth()
-        .signInWithEmailAndPassword(user.email, user.password)
+        .signInWithEmailAndPassword(googleUser.email, googleUser.password)
         .then((userCredential) => {
-          const newUserInfo = { ...user };
+          const newUserInfo = { ...googleUser };
           newUserInfo.error = "";
           newUserInfo.success = true;
-          setUser(newUserInfo);
+          setGoogleUser(newUserInfo);
           console.log("sign in user info", userCredential.user);
         })
         .catch((error) => {
-          const newUserInfo = { ...user };
+          const newUserInfo = { ...googleUser };
           newUserInfo.error = error.message;
           newUserInfo.success = false;
-          setUser(newUserInfo);
+          setGoogleUser(newUserInfo);
         });
     }
 
@@ -173,18 +186,25 @@ function App() {
 
   return (
     <div className="App">
-      {user.isSignedIn ? (
-        <button onClick={handleSignOut}>Sign out</button>
+      {googleUser.isSignedIn ? (
+        <button onClick={handleSignOut}>Sign out from Google</button>
       ) : (
-        <button onClick={handleSignIn}>Sign in</button>
+        <button onClick={handleSignIn}>Sign in using Google</button>
       )}
       <br />
-      <button onClick={handleFbSignIn}>Sign in using Faceebook</button>
-      {user.isSignedIn && (
+      <button onClick={handleFbSignIn}>Sign in using Facebook</button>
+      {googleUser.isSignedIn && (
         <div>
-          <p>Welcome, {user.name} </p>
-          <p>Your email: {user.email} </p>
-          <img src={user.photo} alt={user.name}></img>
+          <p>Welcome, {googleUser.name} </p>
+          <p>Your email: {googleUser.email} </p>
+          <img src={googleUser.photo} alt={googleUser.name}></img>
+        </div>
+      )}
+      {fbUser.isSignedIn && (
+        <div>
+          <p>Welcome, {fbUser.name} </p>
+          <p>Your email: {fbUser.email} </p>
+          <img src={fbUser.photo} alt={fbUser.name} />
         </div>
       )}
       <h1>Our Own Authentication System</h1>
@@ -229,13 +249,13 @@ function App() {
       {
         user.success && <p style={{ color: "green" }}> User created successfully </p>
       } */}
-      {user.success ? (
+      {googleUser.success ? (
         <p style={{ color: "green" }}>
           {" "}
-          User {user.name} {newUser ? "created" : "Logged In"} successfully{" "}
+          User {googleUser.name} {newUser ? "created" : "Logged In"} successfully{" "}
         </p>
       ) : (
-        <p style={{ color: "red" }}> {user.error} </p>
+        <p style={{ color: "red" }}> {googleUser.error} </p>
       )}
     </div>
   );

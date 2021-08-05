@@ -28,9 +28,19 @@ function App() {
     error: "",
     success: false,
   });
+  const [githubUser, setGithubUser] = useState({
+    isSignedIn: false,
+    name: "",
+    email: "",
+    photo: "",
+    error: "",
+    success: false,
+  });
 
   const googleProvider = new firebase.auth.GoogleAuthProvider();
   const fbProvider = new firebase.auth.FacebookAuthProvider();
+  const gitHubProvider = new firebase.auth.GithubAuthProvider();
+  
   const handleSignIn = () => {
     firebase
       .auth()
@@ -87,6 +97,37 @@ function App() {
         var credential = error.credential;
 
         // ...
+      });
+  };
+
+  const handleGitHubSignIn = () => {
+    firebase
+      .auth()
+      .signInWithPopup(gitHubProvider)
+      .then((result) => {
+        /** @type {firebase.auth.OAuthCredential} */
+        var credential = result.credential;
+        var token = credential.accessToken;
+        var user = result.user;
+        console.log('github user', user);
+
+        const { displayName, photoURL, email } = user;
+        const signedInUser = {
+          isSignedIn: true,
+          name: displayName,
+          email: email,
+          photo: photoURL,
+          error: "",
+          success: false,
+        };
+        setGithubUser(signedInUser);
+      })
+      .catch((error) => {
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        var email = error.email;
+        var credential = error.credential;
+        console.log('error', errorCode, errorMessage, email);
       });
   };
 
@@ -193,6 +234,7 @@ function App() {
       )}
       <br />
       <button onClick={handleFbSignIn}>Sign in using Facebook</button>
+      <button onClick={handleGitHubSignIn}>Sign In using GitHub</button>
       {googleUser.isSignedIn && (
         <div>
           <p>Welcome, {googleUser.name} </p>
@@ -205,6 +247,13 @@ function App() {
           <p>Welcome, {fbUser.name} </p>
           <p>Your email: {fbUser.email} </p>
           <img src={fbUser.photo} alt={fbUser.name} />
+        </div>
+      )}
+      {githubUser.isSignedIn && (
+        <div>
+          <p>Welcome, {githubUser.name} </p>
+          <p>Your email: {githubUser.email} </p>
+          <img src={githubUser.photo} alt={githubUser.name} />
         </div>
       )}
       <h1>Our Own Authentication System</h1>
